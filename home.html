@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avee Player Pro - Recorder Edition</title>
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+    <div id="track-name">Musiqa faylini tanlang...</div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="controls-container">
+        <div class="file-input-wrapper">
+            <button class="btn">Fayl Yuklash</button>
+            <input type="file" id="file-input" accept="audio/*">
+        </div>
+        
+        <audio id="audio" controls></audio>
+
+        <button id="record-btn" class="btn rec-btn" disabled>Yozishni boshlash</button>
+    </div>
+
+    <script src="home.js"></script>
+</body>
+</html>
