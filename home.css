@@ -74,8 +74,9 @@ body {
     box-shadow: 0 0 15px rgba(255, 75, 43, 0.4);
 }
 
-.rec-btn:hover:not(:disabled) {
-    box-shadow: 0 0 25px rgba(255, 75, 43, 0.8);
+.dl-btn {
+    background: linear-gradient(45deg, #11998e, #38ef7d);
+    box-shadow: 0 0 15px rgba(56, 239, 125, 0.4);
 }
 
 .recording-active {

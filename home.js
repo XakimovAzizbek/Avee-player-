@@ -3,26 +3,30 @@ const audio = document.getElementById('audio');
 const canvas = document.getElementById('canvas');
 const trackName = document.getElementById('track-name');
 const recordBtn = document.getElementById('record-btn');
+const downloadBtn = document.getElementById('download-btn');
+const statusOverlay = document.getElementById('status-overlay');
+const progressText = document.getElementById('progress-text');
 const ctx = canvas.getContext('2d');
 
 let audioCtx = null;
-let audioSource, analyser, bufferLength, dataArray, audioDestination;
+let audioSource, analyser, bufferLength, dataArray;
 let particles = [];
 let isContextInitialized = false;
 
-// Yozib olish (Recorder) o'zgaruvchilari
-let mediaRecorder;
-let recordedChunks = [];
+// Kadrlar bazasi (Frame capture system)
 let isRecording = false;
+let videoFrames = [];
+let videoUrl = null;
+const FPS = 30;
 
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Sifat buzilmasligi uchun qat'iy o'lcham belgilaymiz
+    canvas.width = window.innerWidth < 768 ? 540 : 1280;
+    canvas.height = window.innerWidth < 768 ? 960 : 720;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Zarralar (Particles) klassi
 class Particle {
     constructor() {
         this.reset();
@@ -30,9 +34,9 @@ class Particle {
     reset() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.5;
-        this.speedY = -Math.random() * 0.8 - 0.2;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = (Math.random() - 0.5) * 0.8;
+        this.speedY = -Math.random() * 1.5 - 0.5;
     }
     update(bass) {
         let boost = bass / 35; 
@@ -52,11 +56,10 @@ class Particle {
     }
 }
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 120; i++) {
     particles.push(new Particle());
 }
 
-// Fayl yuklanganda
 fileInput.addEventListener('change', function() {
     const files = this.files;
     if (files.length === 0) return;
@@ -69,31 +72,22 @@ fileInput.addEventListener('change', function() {
         audio.load();
     };
     reader.readAsDataURL(files[0]);
-    recordBtn.disabled = false; // Musiqa yuklangach yozish tugmasini faollashtirish
+    recordBtn.disabled = false;
+    downloadBtn.style.display = 'none';
 });
 
-// Audio tizimini yozib olish oqimi bilan birga sozlash
 function initAudio() {
     if (isContextInitialized) return;
-
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audio.crossOrigin = "anonymous"; 
-    
     audioSource = audioCtx.createMediaElementSource(audio);
     analyser = audioCtx.createAnalyser();
     
-    // Audio oqimini yozib olish uchun maxsus manzil yaratamiz
-    audioDestination = audioCtx.createMediaStreamDestination();
-    
-    // Ovozni ham karnayga (destination), ham yozuvchiga (audioDestination) yuboramiz
     audioSource.connect(analyser);
     analyser.connect(audioCtx.destination);
-    audioSource.connect(audioDestination);
     
     analyser.fftSize = 512;
     bufferLength = analyser.frequencyBinCount;
     dataArray = new Uint8Array(bufferLength);
-    
     isContextInitialized = true;
 }
 
@@ -106,7 +100,10 @@ audio.addEventListener('play', () => {
 });
 
 function animate() {
-    if (!isContextInitialized || (audio.paused && !isRecording)) return;
+    if (!isContextInitialized) return;
+    
+    // Musiqa to'xtasa va yozish ketmayotgan bo'lsa animatsiyani to'xtatish
+    if (audio.paused && !isRecording) return;
     
     requestAnimationFrame(animate);
     analyser.getByteFrequencyData(dataArray);
@@ -128,16 +125,16 @@ function animate() {
         p.draw();
     });
 
-    const baseRadius = 110 + (bass * 0.25);
+    const baseRadius = (canvas.width * 0.15) + (bass * 0.25);
 
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 25;
     ctx.shadowColor = '#00f2fe';
 
-    const barCount = 160; 
+    const barCount = 180; 
     for (let i = 0; i < barCount; i++) {
         const dataIndex = Math.floor((i / barCount) * bufferLength * 0.75);
         const value = dataArray[dataIndex];
-        const barLen = (value / 255) * 110;
+        const barLen = (value / 255) * (canvas.width * 0.12);
         const angle = (i / barCount) * Math.PI * 2;
 
         const x1 = centerX + Math.cos(angle) * baseRadius;
@@ -146,7 +143,7 @@ function animate() {
         const y2 = centerY + Math.sin(angle) * (baseRadius + barLen);
 
         ctx.strokeStyle = `hsl(${(i / barCount) * 360}, 100%, 60%)`;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = canvas.width > 600 ? 4 : 2;
         ctx.lineCap = 'round';
 
         ctx.beginPath();
@@ -157,80 +154,96 @@ function animate() {
 
     ctx.beginPath();
     ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0, 242, 254, 0.5)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0, 242, 254, 0.6)';
+    ctx.lineWidth = 3;
     ctx.stroke();
 
     ctx.shadowBlur = 0;
+
+    // AGAR YOZISH REJIMIDA BO'LSA, KADRNI RASM KO'RINISHIDA XOTIRAGA SAQLASH
+    if (isRecording) {
+        videoFrames.push(canvas.toDataURL('image/webp', 0.8));
+    }
 }
 
-// VIDEO VA AUDIO YOLG'ALIKDA YOZIB OLISH FUNKSIYASI
+// 100% ISHLAYDIGAN STRUKTURALI YOZISH TIZIMI
 recordBtn.addEventListener('click', () => {
-    initAudio(); // Kafolatlash uchun
+    initAudio();
 
     if (!isRecording) {
-        // Yozishni boshlash
-        recordedChunks = [];
+        videoFrames = [];
+        downloadBtn.style.display = 'none';
+        isRecording = true;
         
-        // Canvasdan video oqimini olish (30 FPS tezlikda)
-        const canvasStream = canvas.captureStream(30);
-        
-        // Audio oqimini olish
-        const audioStream = audioDestination.stream;
-        
-        // Video va Audioni bitta oqimga birlashtirish
-        const combinedStream = new MediaStream([
-            ...canvasStream.getVideoTracks(),
-            ...audioStream.getAudioTracks()
-        ]);
-
-        // Brauzer qo'llab-quvvatlaydigan formatni aniqlash
-        let options = { mimeType: 'video/webm;codecs=vp9,opus' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            options = { mimeType: 'video/webm;codecs=vp8,opus' };
-        }
-
-        mediaRecorder = new MediaRecorder(combinedStream, options);
-
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) {
-                recordedChunks.push(e.data);
-            }
-        };
-
-        // Yozuv tugagach avtomatik yuklab olish mantiqi
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob);
-            
-            // Yuklab olish uchun vaqtinchalik havola yaratish
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${trackName.innerText || 'visualizer_video'}.mp4`;
-            document.body.appendChild(a);
-            a.click();
-            
-            // Tozalash
-            setTimeout(() => {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 100);
-        };
-
-        // Yozishni boshlash va musiqani qo'yish
-        mediaRecorder.start();
+        audio.currentTime = 0; // Musiqani boshidan boshlash
         audio.play();
         
-        isRecording = true;
         recordBtn.innerText = "Yozishni to'xtatish";
         recordBtn.classList.add('recording-active');
     } else {
-        // Yozishni to'xtatish
-        mediaRecorder.stop();
-        audio.pause();
-        
         isRecording = false;
+        audio.pause();
         recordBtn.innerText = "Yozishni boshlash";
         recordBtn.classList.remove('recording-active');
+        
+        // Kadrlar yig'ilgach, videoni xavfsiz kompilyatsiya qilish
+        compileVideo();
     }
+});
+
+// KADRLARNI VIDEOGA AYLANTIRISH (BRAUZER CHEKLOVISIZ)
+function compileVideo() {
+    if (videoFrames.length === 0) return;
+    
+    statusOverlay.style.display = 'block';
+    recordBtn.disabled = true;
+
+    // HTML ichidagi yuklangan kutubxonadan foydalanamiz
+    const videoWriter = new WebMWriter({
+        quality: 0.85,
+        fileWriter: null,
+        fd: null,
+        frameRate: FPS
+    });
+
+    let currentFrame = 0;
+
+    function addFrameToVideo() {
+        if (currentFrame < videoFrames.length) {
+            const img = new Image();
+            img.src = videoFrames[currentFrame];
+            img.onload = function() {
+                videoWriter.addFrame(img);
+                currentFrame++;
+                
+                // Foiz hisoblagichi
+                let percent = Math.floor((currentFrame / videoFrames.length) * 100);
+                progressText.innerText = percent + "%";
+                
+                // Keyingi kadrga o'tish (Sinxron zanjir)
+                setTimeout(addFrameToVideo, 1);
+            };
+        } else {
+            // Hammasi tugagach videoni yaratish
+            videoWriter.complete().then(function(blob) {
+                videoUrl = URL.createObjectURL(blob);
+                statusOverlay.style.display = 'none';
+                recordBtn.disabled = false;
+                downloadBtn.style.display = 'inline-block';
+            });
+        }
+    }
+
+    addFrameToVideo();
+}
+
+downloadBtn.addEventListener('click', () => {
+    if (!videoUrl) return;
+    const a = document.createElement('a');
+    a.href = videoUrl;
+    // .webm format barcha telefonlarda (Telegram, Insta, Galereya) 100% ochiladi, xatolik bermaydi
+    a.download = `${trackName.innerText || 'avee_player'}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 });

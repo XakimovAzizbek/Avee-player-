@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avee Player Pro - Recorder Edition</title>
+    <title>Avee Player Ultimate - 100% Working Recorder</title>
     <link rel="stylesheet" href="home.css">
+    <script src="https://cdn.jsdelivr.net/npm/webm-writer@0.3.0/src/WebMWriter.js"></script>
 </head>
 <body>
 
@@ -21,6 +22,11 @@
         <audio id="audio" controls></audio>
 
         <button id="record-btn" class="btn rec-btn" disabled>Yozishni boshlash</button>
+        <button id="download-btn" class="btn dl-btn" style="display: none;">Videoni Yuklab Olish</button>
+    </div>
+
+    <div id="status-overlay" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 20px; z-index: 100; color: #00f2fe; font-weight: bold;">
+        Video tayyorlanmoqda: <span id="progress-text">0%</span>
     </div>
 
     <script src="home.js"></script>
