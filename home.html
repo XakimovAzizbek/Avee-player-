@@ -9,32 +9,24 @@
 <body>
 <div class="app">
 
-  <!-- Background particles -->
   <canvas id="bgCanvas"></canvas>
 
-  <!-- Main UI -->
   <div class="container">
 
     <!-- Header -->
     <div class="header">
-      <button class="icon-btn" id="menuBtn">&#9776;</button>
       <span class="app-title">PHONK PLAYER</span>
-      <div class="header-right">
-        <button class="icon-btn" id="gridBtn">&#8942;</button>
-        <button class="icon-btn" id="saveVideoBtn" title="Videoni saqlash">&#11015;</button>
-      </div>
+      <button class="rec-icon-btn" id="saveVideoBtn" title="Video yozish">⏺</button>
     </div>
 
-    <!-- Visualizer circle -->
+    <!-- Visualizer -->
     <div class="visualizer-wrap">
       <canvas id="vizCanvas"></canvas>
       <div class="disc-ring">
         <div class="disc" id="disc">
           <div class="disc-inner">
-            <div class="disc-logo">
-              <span class="logo-text">DEXO</span>
-              <span class="logo-sub">PHONK</span>
-            </div>
+            <span class="logo-text">DEXO</span>
+            <span class="logo-sub">PHONK</span>
           </div>
         </div>
       </div>
@@ -47,7 +39,7 @@
       <div class="song-artist" id="songArtist">---</div>
     </div>
 
-    <!-- Progress bar -->
+    <!-- Progress -->
     <div class="progress-wrap">
       <span id="currentTime">0:00</span>
       <div class="progress-bar" id="progressBar">
@@ -59,41 +51,39 @@
 
     <!-- Controls -->
     <div class="controls">
-      <button class="ctrl-btn" id="prevBtn">&#9664;&#9664;</button>
-      <button class="ctrl-btn play-btn" id="playBtn">&#9654;</button>
-      <button class="ctrl-btn" id="nextBtn">&#9654;&#9654;</button>
+      <button class="ctrl-btn" id="prevBtn">⏮</button>
+      <button class="ctrl-btn play-btn" id="playBtn">▶</button>
+      <button class="ctrl-btn" id="nextBtn">⏭</button>
     </div>
 
     <!-- Volume -->
     <div class="volume-wrap">
-      <span>&#128266;</span>
+      <span>🔊</span>
       <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
     </div>
 
-    <!-- File select -->
+    <!-- Buttons -->
     <div class="file-section">
       <label class="file-btn" for="fileInput">
-        &#127925; Musiqa tanlash
-        <input type="file" id="fileInput" accept="audio/*" multiple hidden>
+        🎵 Musiqa tanlash
+        <input type="file" id="fileInput" accept="audio/*" hidden>
       </label>
-      <button class="file-btn record-btn" id="recordBtn">&#11088; Video saqlash</button>
+      <button class="file-btn record-btn" id="recordBtn">⭐ Video saqlash</button>
     </div>
 
-    <!-- Playlist -->
-    <div class="playlist" id="playlist"></div>
+    <div class="loaded-info" id="loadedInfo"></div>
 
   </div>
 
-  <!-- Recording indicator -->
+  <!-- REC badge -->
   <div class="rec-indicator" id="recIndicator">
-    <span class="rec-dot"></span> REC
+    <span class="rec-dot"></span><span id="recTime">REC 0:00</span>
   </div>
 
-  <!-- Status toast -->
   <div class="toast" id="toast"></div>
-
 </div>
 
+<!-- crossOrigin YO'Q — local fayl uchun kerak emas -->
 <audio id="audio"></audio>
 <script src="home.js"></script>
 </body>
