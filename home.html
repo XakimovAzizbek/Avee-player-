@@ -1,34 +1,100 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avee Player Ultimate - 100% Working Recorder</title>
-    <link rel="stylesheet" href="home.css">
-    <script src="https://cdn.jsdelivr.net/npm/webm-writer@0.3.0/src/WebMWriter.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEXO PHONK Player</title>
+<link rel="stylesheet" href="home.css">
 </head>
 <body>
+<div class="app">
 
-    <div id="track-name">Musiqa faylini tanlang...</div>
+  <!-- Background particles -->
+  <canvas id="bgCanvas"></canvas>
 
-    <canvas id="canvas"></canvas>
+  <!-- Main UI -->
+  <div class="container">
 
-    <div class="controls-container">
-        <div class="file-input-wrapper">
-            <button class="btn">Fayl Yuklash</button>
-            <input type="file" id="file-input" accept="audio/*">
+    <!-- Header -->
+    <div class="header">
+      <button class="icon-btn" id="menuBtn">&#9776;</button>
+      <span class="app-title">PHONK PLAYER</span>
+      <div class="header-right">
+        <button class="icon-btn" id="gridBtn">&#8942;</button>
+        <button class="icon-btn" id="saveVideoBtn" title="Videoni saqlash">&#11015;</button>
+      </div>
+    </div>
+
+    <!-- Visualizer circle -->
+    <div class="visualizer-wrap">
+      <canvas id="vizCanvas"></canvas>
+      <div class="disc-ring">
+        <div class="disc" id="disc">
+          <div class="disc-inner">
+            <div class="disc-logo">
+              <span class="logo-text">DEXO</span>
+              <span class="logo-sub">PHONK</span>
+            </div>
+          </div>
         </div>
-        
-        <audio id="audio" controls></audio>
-
-        <button id="record-btn" class="btn rec-btn" disabled>Yozishni boshlash</button>
-        <button id="download-btn" class="btn dl-btn" style="display: none;">Videoni Yuklab Olish</button>
+      </div>
+      <div class="phonk-label">PHONK</div>
     </div>
 
-    <div id="status-overlay" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 20px; z-index: 100; color: #00f2fe; font-weight: bold;">
-        Video tayyorlanmoqda: <span id="progress-text">0%</span>
+    <!-- Song info -->
+    <div class="song-info">
+      <div class="song-title" id="songTitle">Musiqa tanlang...</div>
+      <div class="song-artist" id="songArtist">---</div>
     </div>
 
-    <script src="home.js"></script>
+    <!-- Progress bar -->
+    <div class="progress-wrap">
+      <span id="currentTime">0:00</span>
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-thumb" id="progressThumb"></div>
+      </div>
+      <span id="duration">0:00</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="ctrl-btn" id="prevBtn">&#9664;&#9664;</button>
+      <button class="ctrl-btn play-btn" id="playBtn">&#9654;</button>
+      <button class="ctrl-btn" id="nextBtn">&#9654;&#9654;</button>
+    </div>
+
+    <!-- Volume -->
+    <div class="volume-wrap">
+      <span>&#128266;</span>
+      <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
+    </div>
+
+    <!-- File select -->
+    <div class="file-section">
+      <label class="file-btn" for="fileInput">
+        &#127925; Musiqa tanlash
+        <input type="file" id="fileInput" accept="audio/*" multiple hidden>
+      </label>
+      <button class="file-btn record-btn" id="recordBtn">&#11088; Video saqlash</button>
+    </div>
+
+    <!-- Playlist -->
+    <div class="playlist" id="playlist"></div>
+
+  </div>
+
+  <!-- Recording indicator -->
+  <div class="rec-indicator" id="recIndicator">
+    <span class="rec-dot"></span> REC
+  </div>
+
+  <!-- Status toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<audio id="audio"></audio>
+<script src="home.js"></script>
 </body>
 </html>
