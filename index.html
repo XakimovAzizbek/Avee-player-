@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEXO PHONK Player</title>
+<link rel="stylesheet" href="home.css">
+</head>
+<body>
+<div class="app">
+
+  <canvas id="bgCanvas"></canvas>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <span class="app-title">PHONK PLAYER</span>
+      <button class="rec-icon-btn" id="saveVideoBtn" title="Video yozish">⏺</button>
+    </div>
+
+    <!-- Visualizer -->
+    <div class="visualizer-wrap">
+      <canvas id="vizCanvas"></canvas>
+      <div class="disc-ring">
+        <div class="disc" id="disc">
+          <div class="disc-inner">
+            <span class="logo-text">DEXO</span>
+            <span class="logo-sub">PHONK</span>
+          </div>
+        </div>
+      </div>
+      <div class="phonk-label">PHONK</div>
+    </div>
+
+    <!-- Song info -->
+    <div class="song-info">
+      <div class="song-title" id="songTitle">Musiqa tanlang...</div>
+      <div class="song-artist" id="songArtist">---</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <span id="currentTime">0:00</span>
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-thumb" id="progressThumb"></div>
+      </div>
+      <span id="duration">0:00</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="ctrl-btn" id="prevBtn">⏮</button>
+      <button class="ctrl-btn play-btn" id="playBtn">▶</button>
+      <button class="ctrl-btn" id="nextBtn">⏭</button>
+    </div>
+
+    <!-- Volume -->
+    <div class="volume-wrap">
+      <span>🔊</span>
+      <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
+    </div>
+
+    <!-- Buttons -->
+    <div class="file-section">
+      <label class="file-btn" for="fileInput">
+        🎵 Musiqa tanlash
+        <input type="file" id="fileInput" accept="audio/*" hidden>
+      </label>
+      <button class="file-btn record-btn" id="recordBtn">⭐ Video saqlash</button>
+    </div>
+
+    <div class="loaded-info" id="loadedInfo"></div>
+
+  </div>
+
+  <!-- REC badge -->
+  <div class="rec-indicator" id="recIndicator">
+    <span class="rec-dot"></span><span id="recTime">REC 0:00</span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- crossOrigin YO'Q — local fayl uchun kerak emas -->
+<audio id="audio"></audio>
+<script src="home.js"></script>
+</body>
+</html>
