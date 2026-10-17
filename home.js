@@ -215,7 +215,8 @@ function applyTheme(key) {
 }
 
 // ── CANVAS RESIZE ─────────────────────────────────────────────
-const DPR = Math.min(window.devicePixelRatio || 1, 2);
+// Kamida 2x — video yozishda vizualizer xira boʻlmasligi uchun
+const DPR = Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
 let VS = 300; // vizualizer oʻlchami (CSS px)
 
 function resizeAll() {
@@ -1276,6 +1277,9 @@ document.addEventListener('keydown', e => {
 });
 
 // ── VIDEO RECORDING ───────────────────────────────────────────
+// Video oʻlchami: mantiqiy 480x854, haqiqiy 720x1280 (HD) — aniq va xira emas
+const REC_W = 480, REC_H = 854, REC_SCALE = 1.5;
+
 function rrect(RX, x, y, w, h, r) {
   RX.beginPath();
   if (RX.roundRect) RX.roundRect(x, y, w, h, r); else RX.rect(x, y, w, h);
@@ -1289,9 +1293,13 @@ async function startRecording() {
 
   // Offscreen canvas — 9:16 mobil format
   const RC = document.createElement('canvas');
-  RC.width=480; RC.height=854;
+  RC.width  = Math.round(REC_W * REC_SCALE);
+  RC.height = Math.round(REC_H * REC_SCALE);
   S.recCanvas = RC;
   S.recCtx    = RC.getContext('2d');
+  S.recCtx.scale(REC_SCALE, REC_SCALE);
+  S.recCtx.imageSmoothingEnabled = true;
+  S.recCtx.imageSmoothingQuality = 'high';
 
   // Video stream (canvas)
   let videoStream;
@@ -1313,6 +1321,10 @@ async function startRecording() {
 
   // Mime type
   const MIMES = [
+    'video/mp4;codecs=avc1.640028,mp4a.40.2',
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4;codecs=avc1,mp4a.40.2',
+    'video/mp4',
     'video/webm;codecs=vp9,opus',
     'video/webm;codecs=vp8,opus',
     'video/webm',
@@ -1324,7 +1336,8 @@ async function startRecording() {
   try {
     S.mediaRecorder = new MediaRecorder(combined, {
       mimeType,
-      videoBitsPerSecond: 5_000_000,
+      videoBitsPerSecond: 8_000_000,
+      audioBitsPerSecond: 192_000,
     });
   } catch(e) {
     showToast('MediaRecorder xatosi: '+e.message);
@@ -1338,7 +1351,8 @@ async function startRecording() {
   S.mediaRecorder.onstop = () => {
     if (!S.chunks.length) { showToast('Video ma\'lumot yo\'q!'); return; }
 
-    const blob    = new Blob(S.chunks, { type: mimeType });
+    const baseType = mimeType.split(';')[0];
+    const blob    = new Blob(S.chunks, { type: baseType });
     const blobUrl = URL.createObjectURL(blob);
     const ext     = mimeType.includes('mp4') ? 'mp4' : 'webm';
     const fname   = `phonk_video_${Date.now()}.${ext}`;
@@ -1357,7 +1371,9 @@ async function startRecording() {
     }, 5000);
 
     S.chunks = [];
-    showToast('✅ Video saqlandi: ' + fname, 4000);
+    showToast(ext === 'mp4'
+      ? '✅ MP4 video saqlandi: ' + fname
+      : '✅ Saqlandi: ' + fname + ' (bu brauzer MP4 yozmaydi, WebM)', 4500);
   };
 
   S.mediaRecorder.start(100); // har 100ms chunk
@@ -1386,7 +1402,7 @@ function recRenderLoop() {
   if (!S.isRecording || !S.recCtx) return;
   S.recRafId = requestAnimationFrame(recRenderLoop);
 
-  const RC=S.recCanvas, RX=S.recCtx, W=RC.width, H=RC.height;
+  const RC=S.recCanvas, RX=S.recCtx, W=REC_W, H=REC_H;
 
   // Vizualizer joylashuvi
   const vSize = 400, vX = (W - vSize) / 2, vY = (H - vSize) / 2 - 90;
@@ -1404,7 +1420,7 @@ function recRenderLoop() {
   // 2. Visualizer nusxasi (nur bilan)
   try {
     RX.save();
-    RX.shadowColor = rgba(T.p, 0.8); RX.shadowBlur = 16;
+    RX.shadowColor = rgba(T.p, 0.8); RX.shadowBlur = (16) * REC_SCALE;
     RX.drawImage(vizCanvas, vX + ox, vY + oy, vSize, vSize);
     RX.restore();
   } catch(e){}
@@ -1418,7 +1434,7 @@ function recRenderLoop() {
   RX.beginPath(); RX.arc(dcx, dcy, ringR, 0, Math.PI*2);
   RX.fillStyle = rg; RX.fill();
   RX.strokeStyle = css(T.p); RX.lineWidth = 2.5;
-  RX.shadowColor = css(T.p); RX.shadowBlur = 22 + S.beat * 30;
+  RX.shadowColor = css(T.p); RX.shadowBlur = (22 + S.beat * 30) * REC_SCALE;
   RX.stroke(); RX.shadowBlur = 0;
   // Vinil
   const discR = ringR * 0.81;
@@ -1446,12 +1462,12 @@ function recRenderLoop() {
   cg.addColorStop(0, css(T.m)); cg.addColorStop(1, css(T.bg));
   RX.fillStyle = cg; RX.fill();
   RX.strokeStyle = css(T.p); RX.lineWidth = 2;
-  RX.shadowColor = css(T.p); RX.shadowBlur = 12; RX.stroke(); RX.shadowBlur = 0;
+  RX.shadowColor = css(T.p); RX.shadowBlur = (12) * REC_SCALE; RX.stroke(); RX.shadowBlur = 0;
   // DEXO matn
   RX.textAlign = 'center';
   RX.font = `bold ${Math.round(inR * 0.4)}px Orbitron,monospace`;
   RX.fillStyle = css(T.l);
-  RX.shadowColor = css(T.l); RX.shadowBlur = 10;
+  RX.shadowColor = css(T.l); RX.shadowBlur = (10) * REC_SCALE;
   RX.fillText('DEXO', dcx, dcy + 3);
   RX.shadowBlur = 0;
   RX.font = `${Math.round(inR * 0.2)}px Rajdhani,sans-serif`;
@@ -1466,7 +1482,7 @@ function recRenderLoop() {
     RX.fillStyle = css(T.s); RX.fillText('PHONK', W/2 + gOff - 3, vY + vSize + 32);
   }
   RX.fillStyle = css(T.l);
-  RX.shadowColor = css(T.p); RX.shadowBlur = 24;
+  RX.shadowColor = css(T.p); RX.shadowBlur = (24) * REC_SCALE;
   RX.fillText('PHONK', W/2 + gOff, vY + vSize + 32);
   RX.shadowBlur = 0;
 
@@ -1504,7 +1520,7 @@ function recRenderLoop() {
   const elap = Math.floor((Date.now()-S.recStart)/1000);
   RX.textAlign='right';
   RX.font='11px Orbitron,monospace';
-  RX.fillStyle='red'; RX.shadowColor='red'; RX.shadowBlur=8;
+  RX.fillStyle='red'; RX.shadowColor='red'; RX.shadowBlur = (8) * REC_SCALE;
   RX.fillText(`● REC ${fmt(elap)}`, W-16, 30);
   RX.shadowBlur=0;
   RX.textAlign='center';
