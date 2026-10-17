@@ -3,52 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#06000f">
 <title>DEXO PHONK Player</title>
 <link rel="stylesheet" href="home.css">
 </head>
 <body>
-<div class="app" id="app">
+<div class="app">
 
   <canvas id="bgCanvas"></canvas>
-  <div class="flash" id="flash"></div>
-  <div class="vignette"></div>
-  <div class="scan"></div>
 
-  <div class="container" id="container">
+  <div class="container">
 
-    <!-- Sarlavha -->
-    <header class="header">
-      <span class="app-title">PHONK PLAYER</span>
-      <div class="header-right">
-        <div class="bpm" title="Musiqa tempi (taxminiy)">
-          <span id="bpmVal">--</span><small>BPM</small>
-        </div>
-        <button class="round-btn" id="saveVideoBtn" title="Video yozish" data-ico="rec"></button>
-      </div>
-    </header>
+    <!-- Header -->
+    <div class="header">
+      <span class="app-title" id="appTitle">PHONK PLAYER</span>
+      <button class="rec-icon-btn" id="saveVideoBtn" title="Video yozish">⏺</button>
+    </div>
 
-    <!-- Vizualizer -->
+    <!-- Visualizer -->
     <div class="visualizer-wrap" id="vizWrap">
       <canvas id="vizCanvas"></canvas>
       <div class="disc-ring" id="discRing">
-        <div class="disc" id="disc">
-          <div class="disc-inner">
-            <span class="logo-text">DEXO</span>
-            <span class="logo-sub">PHONK</span>
-          </div>
+        <div class="disc" id="disc"></div>
+        <div class="disc-inner">
+          <span class="logo-text">DEXO</span>
+          <span class="logo-sub">PHONK</span>
         </div>
       </div>
-      <div class="phonk-label">PHONK</div>
+    </div>
+    <div class="phonk-label" id="phonkLabel">PHONK</div>
+
+    <!-- Bas / Oʻrta / Yuqori oʻlchagichlari -->
+    <div class="meters" aria-hidden="true">
+      <div class="meter"><span>Bas</span><div class="meter-bar"><i id="mBass"></i></div></div>
+      <div class="meter"><span>Oʻrta</span><div class="meter-bar"><i id="mMid"></i></div></div>
+      <div class="meter"><span>Yuqori</span><div class="meter-bar"><i id="mHigh"></i></div></div>
     </div>
 
-    <!-- Bas / oʻrta / yuqori darajalari -->
-    <div class="meters">
-      <div class="meter"><span>Bas</span><div class="meter-bar" id="mBass"><i></i></div></div>
-      <div class="meter"><span>Oʻrta</span><div class="meter-bar" id="mMid"><i></i></div></div>
-      <div class="meter"><span>Yuqori</span><div class="meter-bar" id="mTreble"><i></i></div></div>
-    </div>
-
-    <!-- Qoʻshiq maʼlumoti -->
+    <!-- Song info -->
     <div class="song-info">
       <div class="song-title" id="songTitle">Musiqa tanlang...</div>
       <div class="song-artist" id="songArtist">---</div>
@@ -58,146 +50,162 @@
     <div class="progress-wrap">
       <span id="currentTime">0:00</span>
       <div class="progress-bar" id="progressBar">
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-fill" id="progressFill"></div>
         <div class="progress-thumb" id="progressThumb"></div>
       </div>
       <span id="duration">0:00</span>
     </div>
 
-    <!-- Boshqaruv -->
+    <!-- Controls -->
     <div class="controls">
-      <button class="ctrl-btn small" id="shuffleBtn" title="Aralashtirish (S)" data-ico="shuffle"></button>
-      <button class="ctrl-btn" id="prevBtn" title="Oldingi (P)" data-ico="prev"></button>
-      <button class="ctrl-btn play-btn" id="playBtn" title="Ijro / pauza (Probel)" data-ico="play"></button>
-      <button class="ctrl-btn" id="nextBtn" title="Keyingi (N)" data-ico="next"></button>
-      <button class="ctrl-btn small" id="loopBtn" title="Takrorlash (L)" data-ico="repeat"></button>
+      <button class="ctrl-btn small" id="shuffleBtn" title="Aralashtirish">🔀</button>
+      <button class="ctrl-btn" id="prevBtn" title="Oldingi">⏮</button>
+      <button class="ctrl-btn play-btn" id="playBtn" title="Ijro / pauza">▶</button>
+      <button class="ctrl-btn" id="nextBtn" title="Keyingi">⏭</button>
+      <button class="ctrl-btn small" id="repeatBtn" title="Takrorlash">🔁</button>
     </div>
 
-    <!-- Ovoz balandligi -->
+    <!-- Volume -->
     <div class="volume-wrap">
-      <button class="icon-btn" id="muteBtn" title="Ovozni oʻchirish (M)" data-ico="vol"></button>
-      <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8" aria-label="Ovoz balandligi">
+      <button class="vol-btn" id="volBtn" title="Ovozni oʻchirish">🔊</button>
+      <input type="range" class="slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
     </div>
 
-    <!-- Tablar -->
-    <div class="tabs" role="tablist">
-      <button class="tab active" data-tab="fx" role="tab">Effektlar</button>
-      <button class="tab" data-tab="audio" role="tab">Ovoz</button>
-      <button class="tab" data-tab="list" role="tab">Pleylist</button>
-    </div>
-
-    <div class="panels">
-
-      <!-- EFFEKTLAR -->
-      <section class="panel show" id="panel-fx">
-        <div class="group">
-          <div class="group-title">Vizualizer turi</div>
-          <div class="chips">
-            <button class="chip active" data-viz="ring">Halqa</button>
-            <button class="chip" data-viz="wave">Toʻlqin</button>
-            <button class="chip" data-viz="bars">Spektr</button>
-            <button class="chip" data-viz="orbit">Orbita</button>
-          </div>
-          <div class="switches">
-            <button class="switch" data-fx="auto" aria-pressed="false"><span class="sw"></span>Avto-almashtirish</button>
-          </div>
-        </div>
-
-        <div class="group">
-          <div class="group-title">Rang</div>
-          <div class="swatches">
-            <button class="swatch active" data-theme="phonk" title="Phonk"></button>
-            <button class="swatch" data-theme="neon" title="Neon"></button>
-            <button class="swatch" data-theme="fire" title="Olov"></button>
-            <button class="swatch" data-theme="toxic" title="Zahar"></button>
-            <button class="swatch" data-theme="rainbow" title="Kamalak (avto)"></button>
-          </div>
-        </div>
-
-        <div class="group">
-          <div class="group-title">Zarbaga javob beradigan effektlar</div>
-          <div class="switches">
-            <button class="switch" data-fx="shake" aria-pressed="true"><span class="sw"></span>Titroq</button>
-            <button class="switch" data-fx="flash" aria-pressed="true"><span class="sw"></span>Chaqnash</button>
-            <button class="switch" data-fx="glitch" aria-pressed="true"><span class="sw"></span>Glitch</button>
-            <button class="switch" data-fx="particles" aria-pressed="true"><span class="sw"></span>Zarralar</button>
-            <button class="switch" data-fx="rings" aria-pressed="true"><span class="sw"></span>Halqalar</button>
-            <button class="switch" data-fx="screenBars" aria-pressed="true"><span class="sw"></span>Ekran spektri</button>
-            <button class="switch" data-fx="scan" aria-pressed="false"><span class="sw"></span>Skaner chiziqlari</button>
-          </div>
-          <label class="slider-row">
-            <span>Kuch</span>
-            <input type="range" data-num="power" min="0.3" max="2" step="0.1" value="1">
-            <output></output>
-          </label>
-        </div>
-      </section>
-
-      <!-- OVOZ -->
-      <section class="panel" id="panel-audio">
-        <div class="group">
-          <div class="group-title">Tayyor sozlamalar</div>
-          <div class="chips">
-            <button class="chip active" data-preset="normal">Oddiy</button>
-            <button class="chip" data-preset="slowed">Slowed + reverb</button>
-            <button class="chip" data-preset="sped">Sped up</button>
-            <button class="chip" data-preset="bass">Bass boost</button>
-          </div>
-        </div>
-
-        <div class="group">
-          <div class="group-title">Ekvalayzer</div>
-          <label class="slider-row"><span>Bas</span>
-            <input type="range" data-au="bass" min="-12" max="12" step="1" value="0"><output></output></label>
-          <label class="slider-row"><span>Oʻrta</span>
-            <input type="range" data-au="mid" min="-12" max="12" step="1" value="0"><output></output></label>
-          <label class="slider-row"><span>Yuqori</span>
-            <input type="range" data-au="treble" min="-12" max="12" step="1" value="0"><output></output></label>
-        </div>
-
-        <div class="group">
-          <div class="group-title">Effektlar</div>
-          <label class="slider-row"><span>Reverb</span>
-            <input type="range" data-au="reverb" min="0" max="1" step="0.05" value="0"><output></output></label>
-          <label class="slider-row"><span>Tezlik</span>
-            <input type="range" data-au="speed" min="0.5" max="1.5" step="0.05" value="1"><output></output></label>
-          <div class="switches">
-            <button class="switch" data-aub="keepPitch" aria-pressed="true"><span class="sw"></span>Ohangni saqlash</button>
-          </div>
-          <div class="hint">Ohangni saqlash oʻchiq boʻlsa, tezlik oʻzgarganda ovoz ham past yoki baland boʻladi (slowed / sped up uslubi).</div>
-        </div>
-      </section>
-
-      <!-- PLEYLIST -->
-      <section class="panel" id="panel-list">
-        <ul class="playlist" id="playlist"></ul>
-        <div class="empty" id="emptyList">Pleylist boʻsh. «Musiqa qoʻshish» tugmasini bosing yoki audio fayllarni shu sahifaga tashlang.</div>
-        <div class="hint keys">Klavishlar: Probel — ijro, ← → — surish, ↑ ↓ — ovoz, N / P — keyingi / oldingi, M — ovozsiz, V — vizualizer, T — rang.</div>
-      </section>
-    </div>
-
-    <!-- Tugmalar -->
-    <div class="actions">
-      <label class="btn primary" for="fileInput">
-        <span class="ico" data-ico="music"></span>Musiqa qoʻshish
+    <!-- Buttons -->
+    <div class="file-section">
+      <label class="file-btn" for="fileInput">
+        🎵 Musiqa qoʻshish
         <input type="file" id="fileInput" accept="audio/*" multiple hidden>
       </label>
-      <button class="btn record" id="recordBtn"><span class="ico" data-ico="rec"></span>Video saqlash</button>
+      <button class="file-btn record-btn" id="recordBtn">⭐ Video saqlash</button>
     </div>
 
     <div class="loaded-info" id="loadedInfo"></div>
+
+    <!-- ═════════ SOZLAMALAR PANELI ═════════ -->
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab active" role="tab" data-tab="viz">🎨 Koʻrinish</button>
+        <button class="tab" role="tab" data-tab="sound">🎛 Ovoz</button>
+        <button class="tab" role="tab" data-tab="list">📃 Roʻyxat</button>
+      </div>
+
+      <!-- 1) KO'RINISH -->
+      <section class="tab-body active" id="tab-viz">
+
+        <h3 class="sec-title">Vizualizer turi</h3>
+        <div class="chip-grid cols-5" id="modeChips">
+          <button class="chip active" data-mode="circle"><i>◎</i><span>Doira</span></button>
+          <button class="chip" data-mode="wave"><i>〰</i><span>Toʻlqin</span></button>
+          <button class="chip" data-mode="dots"><i>⁘</i><span>Nuqta</span></button>
+          <button class="chip" data-mode="star"><i>✦</i><span>Yulduz</span></button>
+          <button class="chip" data-mode="auto"><i>🔀</i><span>Avto</span></button>
+        </div>
+
+        <h3 class="sec-title">Rang mavzusi <em id="themeName">Binafsha</em></h3>
+        <div class="swatches" id="themeChips">
+          <button class="swatch active" data-theme="neon"   style="--c1:#8b00ff;--c2:#00fff7" title="Binafsha"></button>
+          <button class="swatch" data-theme="cyber"  style="--c1:#00a2ff;--c2:#00ffb3" title="Moviy"></button>
+          <button class="swatch" data-theme="blood"  style="--c1:#ff1744;--c2:#ffb300" title="Qizil"></button>
+          <button class="swatch" data-theme="toxic"  style="--c1:#00e676;--c2:#e6ff00" title="Yashil"></button>
+          <button class="swatch" data-theme="sunset" style="--c1:#ff6a00;--c2:#ff00aa" title="Quyosh botishi"></button>
+          <button class="swatch rainbow" data-theme="rainbow" title="Kamalak (musiqa bilan almashadi)"></button>
+        </div>
+
+        <h3 class="sec-title">Musiqaga mos effektlar</h3>
+        <p class="hint">Bas (zarba) urilganda ishga tushadi. Keraklisini yoqing yoki oʻchiring.</p>
+        <div class="chip-grid cols-3" id="fxChips">
+          <button class="chip toggle active" data-fx="shake"><i>📳</i><span>Silkinish</span></button>
+          <button class="chip toggle active" data-fx="flash"><i>⚡</i><span>Chaqnash</span></button>
+          <button class="chip toggle active" data-fx="glitch"><i>👾</i><span>Glitch</span></button>
+          <button class="chip toggle active" data-fx="wave"><i>🌊</i><span>Zarba toʻlqini</span></button>
+          <button class="chip toggle active" data-fx="particles"><i>✨</i><span>Zarralar</span></button>
+          <button class="chip toggle active" data-fx="laser"><i>🔦</i><span>Lazer nurlari</span></button>
+        </div>
+
+        <div class="slider-row">
+          <label for="intensity">Effekt kuchi</label>
+          <input type="range" class="slider" id="intensity" min="0.3" max="1.5" step="0.05" value="1">
+          <output id="intensityVal">100%</output>
+        </div>
+      </section>
+
+      <!-- 2) OVOZ -->
+      <section class="tab-body" id="tab-sound">
+
+        <h3 class="sec-title">Tayyor sozlamalar</h3>
+        <div class="chip-wrap" id="presetChips">
+          <button class="chip pill active" data-preset="normal">Oddiy</button>
+          <button class="chip pill" data-preset="bass">🔊 Bass Boost</button>
+          <button class="chip pill" data-preset="phonk">😈 Phonk Drive</button>
+          <button class="chip pill" data-preset="slowed">🌙 Slowed + Reverb</button>
+          <button class="chip pill" data-preset="nightcore">⚡ Nightcore</button>
+          <button class="chip pill" data-preset="d8">🎧 8D</button>
+        </div>
+
+        <h3 class="sec-title">Qoʻlda sozlash</h3>
+
+        <div class="slider-row">
+          <label for="sBass">Bas</label>
+          <input type="range" class="slider" id="sBass" min="-12" max="15" step="1" value="0">
+          <output id="sBassVal">0 dB</output>
+        </div>
+        <div class="slider-row">
+          <label for="sTreble">Yuqori</label>
+          <input type="range" class="slider" id="sTreble" min="-12" max="12" step="1" value="0">
+          <output id="sTrebleVal">0 dB</output>
+        </div>
+        <div class="slider-row">
+          <label for="sReverb">Reverb</label>
+          <input type="range" class="slider" id="sReverb" min="0" max="100" step="1" value="0">
+          <output id="sReverbVal">0%</output>
+        </div>
+        <div class="slider-row">
+          <label for="sDrive">Distorsiya</label>
+          <input type="range" class="slider" id="sDrive" min="0" max="100" step="1" value="0">
+          <output id="sDriveVal">0%</output>
+        </div>
+        <div class="slider-row">
+          <label for="sSpeed">Tezlik</label>
+          <input type="range" class="slider" id="sSpeed" min="0.5" max="1.5" step="0.05" value="1">
+          <output id="sSpeedVal">1.00x</output>
+        </div>
+
+        <label class="switch-row" for="d8Toggle">
+          <span>🎧 8D ovoz <small>quloqchinda chapdan oʻngga aylanadi</small></span>
+          <input type="checkbox" id="d8Toggle">
+          <i class="switch"></i>
+        </label>
+
+        <div class="reset-row">
+          <button class="chip pill" id="fxReset">↺ Asl holatga qaytarish</button>
+        </div>
+        <p class="hint">Ovoz effektlari yozilgan videoga ham tushadi. 8D uchun quloqchin tavsiya etiladi.</p>
+      </section>
+
+      <!-- 3) RO'YXAT -->
+      <section class="tab-body" id="tab-list">
+        <div class="list-head">
+          <span id="listCount">0 ta musiqa</span>
+          <button class="mini-btn" id="clearList">🗑 Tozalash</button>
+        </div>
+        <ul class="playlist" id="playlist"></ul>
+        <div class="empty" id="emptyList">Roʻyxat boʻsh.<br>«🎵 Musiqa qoʻshish» tugmasi bilan bir nechta musiqa tanlang yoki faylni shu yerga tashlang.</div>
+      </section>
+    </div>
+
   </div>
 
-  <!-- REC belgisi -->
+  <!-- REC badge -->
   <div class="rec-indicator" id="recIndicator">
     <span class="rec-dot"></span><span id="recTime">REC 0:00</span>
   </div>
 
-  <div class="drop">Musiqani shu yerga tashlang</div>
   <div class="toast" id="toast"></div>
 </div>
 
-<audio id="audio" preload="auto"></audio>
+<!-- crossOrigin YO'Q — local fayl uchun kerak emas -->
+<audio id="audio"></audio>
 <script src="home.js"></script>
 </body>
 </html>
