@@ -70,7 +70,7 @@ const S = {
   audioDestNode: null,   // recording uchun
   bassF: null, trebleF: null, shaper: null,
   dryGain: null, wetGain: null, convolver: null,
-  panner: null, limiter: null,
+  panner: null, limiter: null, revOn: false,
 
   // Musiqa tahlili
   bass: 0, mid: 0, high: 0, energy: 0,
@@ -137,6 +137,11 @@ const themeNameEl   = $('themeName');
 
 const vizCtx = vizCanvas.getContext('2d');
 const bgCtx  = bgCanvas.getContext('2d');
+
+// Zarbada yonadigan disk nuri (faqat opacity oʻzgaradi — juda yengil)
+const discGlow = document.createElement('div');
+discGlow.className = 'disc-glow';
+discRing.appendChild(discGlow);
 
 // ── RANG MAVZULARI ───────────────────────────────────────────
 const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
@@ -215,6 +220,16 @@ function applyTheme(key) {
 }
 
 // ── CANVAS RESIZE ─────────────────────────────────────────────
+// Fon effektlari yarim aniqlikda chiziladi — 4 barobar tezroq (bas paytida qotmaydi)
+const BG_SCALE = 0.5;
+let vizCX = 0, vizCY = 0;
+// Vizualizer markazi har kadrda emas, faqat kerak boʻlganda oʻqiladi
+function updateVizCenter() {
+  const r = vizWrap.getBoundingClientRect();
+  vizCX = r.left + r.width / 2 - S.shx;
+  vizCY = r.top + r.height / 2 - S.shy;
+}
+
 // Kamida 2x — video yozishda vizualizer xira boʻlmasligi uchun
 const DPR = Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
 let VS = 300; // vizualizer oʻlchami (CSS px)
@@ -223,10 +238,15 @@ function resizeAll() {
   VS = vizWrap.offsetWidth || 300;
   vizCanvas.width = vizCanvas.height = Math.round(VS * DPR);
   vizCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  bgCanvas.width  = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
+  bgCanvas.width  = Math.round(window.innerWidth  * BG_SCALE);
+  bgCanvas.height = Math.round(window.innerHeight * BG_SCALE);
+  bgCtx.setTransform(BG_SCALE, 0, 0, BG_SCALE, 0, 0);
+  updateVizCenter();
 }
 window.addEventListener('resize', resizeAll);
+window.addEventListener('scroll', updateVizCenter, { passive: true });
+window.addEventListener('load', updateVizCenter);
+setInterval(updateVizCenter, 600);
 resizeAll();
 
 // ── MUSIQA TAHLILI (chastotalar, bas, zarba) ─────────────────
@@ -346,7 +366,7 @@ function onBeat(str, now) {
   if (rings.length > 8) rings.shift();
 
   if (f.particles) {
-    const n = Math.round((10 + 18 * str) * I);
+    const n = Math.round((7 + 11 * str) * I);
     for (let i = 0; i < n; i++) {
       const ang = Math.random() * Math.PI * 2;
       const sp = (0.35 + Math.random() * 0.9) * (0.7 + str * 0.6);
@@ -357,7 +377,7 @@ function onBeat(str, now) {
         t: 0, life, size: 1.2 + Math.random() * 2.6, c: Math.random() < 0.5 ? 0 : 1,
       });
     }
-    if (bursts.length > 260) bursts.splice(0, bursts.length - 260);
+    if (bursts.length > 150) bursts.splice(0, bursts.length - 150);
   }
 
   if (f.flash) S.flash = Math.max(S.flash, str * I);
@@ -400,7 +420,7 @@ function stepFx(dt, now) {
   if (S.rainbow) {
     S.hue = (S.hue + dt * (14 + S.energy * 50)) % 360;
     buildRainbow();
-    if (now - S.lastThemeCss > 110) {
+    if (now - S.lastThemeCss > 220) {
       S.lastThemeCss = now;
       pushThemeCss();
     }
@@ -486,10 +506,9 @@ function drawFx(ctx, W, H, cx, cy, u) {
 }
 
 function drawBg() {
-  const W = bgCanvas.width, H = bgCanvas.height;
+  const W = window.innerWidth, H = window.innerHeight;
   bgCtx.clearRect(0, 0, W, H);
-  const r = vizWrap.getBoundingClientRect();
-  drawFx(bgCtx, W, H, r.left + r.width / 2, r.top + r.height / 2, VS);
+  drawFx(bgCtx, W, H, vizCX + S.shx, vizCY + S.shy, VS);
 }
 
 // ── VIZUALIZER ────────────────────────────────────────────────
@@ -498,6 +517,13 @@ const MODE_NAMES = { circle: 'Doira', wave: 'Toʻlqin', dots: 'Nuqta', star: 'Yu
 
 // k-chi nuqta uchun chastota guruhi (chap-oʻng simmetriya, bas pastda)
 const mirrorIdx = (k, N) => (k < N / 2 ? k : N - 1 - k);
+
+// Qatlamli nur — shadowBlur dan bir necha barobar tez
+function strokeGlow(ctx, col, lw, a) {
+  ctx.strokeStyle = rgba(col, a * 0.14); ctx.lineWidth = lw + 10; ctx.stroke();
+  ctx.strokeStyle = rgba(col, a * 0.30); ctx.lineWidth = lw + 4;  ctx.stroke();
+  ctx.strokeStyle = rgba(col, a);        ctx.lineWidth = lw;      ctx.stroke();
+}
 
 function drawViz() {
   const W = VS, cx = W / 2, cy = W / 2;
@@ -516,12 +542,7 @@ function drawViz() {
   // Asosiy halqa (hamma rejimda)
   vizCtx.beginPath();
   vizCtx.arc(cx, cy, R, 0, Math.PI * 2);
-  vizCtx.strokeStyle = rgba(mixc(T.p, T.l, S.bass), 0.5 + S.bass * 0.5);
-  vizCtx.lineWidth = 2 + S.bass * 4;
-  vizCtx.shadowColor = css(T.l);
-  vizCtx.shadowBlur = 10 + S.bass * 20;
-  vizCtx.stroke();
-  vizCtx.shadowBlur = 0;
+  strokeGlow(vizCtx, mixc(T.p, T.l, S.bass), 2 + S.bass * 4, 0.5 + S.bass * 0.5);
 }
 
 function drawBars(cx, cy, R, maxLen) {
@@ -536,8 +557,12 @@ function drawBars(cx, cy, R, maxLen) {
     const x2 = cx + Math.cos(ang) * (R + 2 + len), y2 = cy + Math.sin(ang) * (R + 2 + len);
     vizCtx.beginPath();
     vizCtx.moveTo(x1, y1); vizCtx.lineTo(x2, y2);
-    vizCtx.strokeStyle = rgba(mixc(T.p, T.s, bi / NB), 0.45 + v * 0.55);
-    vizCtx.stroke();
+    const bc = mixc(T.p, T.s, bi / NB);
+    const lw = vizCtx.lineWidth;
+    vizCtx.strokeStyle = rgba(bc, 0.12 + v * 0.1);
+    vizCtx.lineWidth = lw * 2.4; vizCtx.stroke();
+    vizCtx.strokeStyle = rgba(bc, 0.45 + v * 0.55);
+    vizCtx.lineWidth = lw; vizCtx.stroke();
   }
 }
 
@@ -566,12 +591,7 @@ function drawWave(cx, cy, R, maxLen) {
   vizCtx.stroke();
 
   path(1, 0);
-  vizCtx.strokeStyle = css(T.l);
-  vizCtx.lineWidth = 3;
-  vizCtx.shadowColor = css(T.l);
-  vizCtx.shadowBlur = 14;
-  vizCtx.stroke();
-  vizCtx.shadowBlur = 0;
+  strokeGlow(vizCtx, T.l, 3, 1);
 }
 
 function drawDots(cx, cy, R, maxLen) {
@@ -619,12 +639,7 @@ function drawStar(cx, cy, R, maxLen) {
   fg.addColorStop(1, rgba(T.l, 0.3));
   vizCtx.fillStyle = fg;
   vizCtx.fill();
-  vizCtx.strokeStyle = css(T.l);
-  vizCtx.lineWidth = 2;
-  vizCtx.shadowColor = css(T.l);
-  vizCtx.shadowBlur = 12;
-  vizCtx.stroke();
-  vizCtx.shadowBlur = 0;
+  strokeGlow(vizCtx, T.l, 2, 1);
 
   path(0.45);
   vizCtx.strokeStyle = rgba(T.s, 0.9);
@@ -661,7 +676,7 @@ function updateDom(now, dt) {
   // Disk: zarbada kattalashadi + aylanadi
   discRing.style.transform = `scale(${(1 + S.beat * 0.07 * Math.min(1.3, I)).toFixed(4)})`;
   disc.style.transform = `rotate(${S.discAngle.toFixed(3)}rad)`;
-  vizWrap.style.setProperty('--beat', S.beat.toFixed(3));
+  discGlow.style.opacity = Math.min(1, S.beat).toFixed(3);
 
   // Silkinish
   if (CFG.fx.shake && S.shake > 0.03) {
@@ -761,6 +776,9 @@ function applyFx() {
   S.bassF.gain.setTargetAtTime(s.bass, t, 0.05);
   S.trebleF.gain.setTargetAtTime(s.treble, t, 0.05);
   const w = s.reverb / 100;
+  if (w > 0 && !S.revOn) { S.shaper.connect(S.convolver); S.revOn = true; }
+  else if (w === 0 && S.revOn) { S.shaper.disconnect(S.convolver); S.revOn = false; }
+  S.shaper.oversample = s.drive > 0 ? '2x' : 'none';
   S.wetGain.gain.setTargetAtTime(w * 1.2, t, 0.08);
   S.dryGain.gain.setTargetAtTime(1 - w * 0.35, t, 0.08);
   S.shaper.curve = s.drive > 0 ? makeDriveCurve(s.drive / 100) : null;
@@ -885,7 +903,8 @@ function ensureAudioCtx() {
   S.bassF.connect(S.trebleF);
   S.trebleF.connect(S.shaper);
   S.shaper.connect(S.dryGain);   S.dryGain.connect(fxOut);
-  S.shaper.connect(S.convolver); S.convolver.connect(S.wetGain); S.wetGain.connect(fxOut);
+  // shaper → convolver ulanishi applyFx() da (faqat reverb yoqilganda)
+  S.convolver.connect(S.wetGain); S.wetGain.connect(fxOut);
 
   let last = fxOut;
   if (ctx.createStereoPanner) {
@@ -1398,9 +1417,12 @@ async function startRecording() {
   showToast('🔴 Video yozish boshlandi!');
 }
 
-function recRenderLoop() {
+function recRenderLoop(ts) {
   if (!S.isRecording || !S.recCtx) return;
   S.recRafId = requestAnimationFrame(recRenderLoop);
+  // Video 30 fps — ekran 60 fps da ishlaganda ikki barobar kam yuk
+  if (ts && S.recLast && ts - S.recLast < 30) return;
+  S.recLast = ts || performance.now();
 
   const RC=S.recCanvas, RX=S.recCtx, W=REC_W, H=REC_H;
 
@@ -1419,10 +1441,7 @@ function recRenderLoop() {
 
   // 2. Visualizer nusxasi (nur bilan)
   try {
-    RX.save();
-    RX.shadowColor = rgba(T.p, 0.8); RX.shadowBlur = (16) * REC_SCALE;
     RX.drawImage(vizCanvas, vX + ox, vY + oy, vSize, vSize);
-    RX.restore();
   } catch(e){}
 
   // 3. Disc (zarbada kattalashadi, vinil aylanadi)
@@ -1433,9 +1452,8 @@ function recRenderLoop() {
   rg.addColorStop(0, css(T.d)); rg.addColorStop(0.6, css(T.m)); rg.addColorStop(1, css(T.bg));
   RX.beginPath(); RX.arc(dcx, dcy, ringR, 0, Math.PI*2);
   RX.fillStyle = rg; RX.fill();
-  RX.strokeStyle = css(T.p); RX.lineWidth = 2.5;
-  RX.shadowColor = css(T.p); RX.shadowBlur = (22 + S.beat * 30) * REC_SCALE;
-  RX.stroke(); RX.shadowBlur = 0;
+  RX.strokeStyle = rgba(T.p, 0.12 + S.beat * 0.3); RX.lineWidth = 18 + S.beat * 16; RX.stroke();
+  strokeGlow(RX, T.p, 2.5, 1);
   // Vinil
   const discR = ringR * 0.81;
   const vg = RX.createRadialGradient(dcx - discR*0.2, dcy - discR*0.3, 0, dcx, dcy, discR);
@@ -1462,7 +1480,7 @@ function recRenderLoop() {
   cg.addColorStop(0, css(T.m)); cg.addColorStop(1, css(T.bg));
   RX.fillStyle = cg; RX.fill();
   RX.strokeStyle = css(T.p); RX.lineWidth = 2;
-  RX.shadowColor = css(T.p); RX.shadowBlur = (12) * REC_SCALE; RX.stroke(); RX.shadowBlur = 0;
+  strokeGlow(RX, T.p, 2, 1);
   // DEXO matn
   RX.textAlign = 'center';
   RX.font = `bold ${Math.round(inR * 0.4)}px Orbitron,monospace`;
@@ -1482,7 +1500,7 @@ function recRenderLoop() {
     RX.fillStyle = css(T.s); RX.fillText('PHONK', W/2 + gOff - 3, vY + vSize + 32);
   }
   RX.fillStyle = css(T.l);
-  RX.shadowColor = css(T.p); RX.shadowBlur = (24) * REC_SCALE;
+  RX.shadowColor = css(T.p); RX.shadowBlur = (14) * REC_SCALE;
   RX.fillText('PHONK', W/2 + gOff, vY + vSize + 32);
   RX.shadowBlur = 0;
 
@@ -1515,15 +1533,6 @@ function recRenderLoop() {
   RX.font='10px Orbitron,monospace'; RX.fillStyle = css(mixc(T.p, [255,255,255], 0.35));
   RX.textAlign='left';  RX.fillText(fmt(audio.currentTime), bX, bY+20);
   RX.textAlign='right'; RX.fillText(fmt(audio.duration||0), bX+bW, bY+20);
-
-  // 9. REC badge
-  const elap = Math.floor((Date.now()-S.recStart)/1000);
-  RX.textAlign='right';
-  RX.font='11px Orbitron,monospace';
-  RX.fillStyle='red'; RX.shadowColor='red'; RX.shadowBlur = (8) * REC_SCALE;
-  RX.fillText(`● REC ${fmt(elap)}`, W-16, 30);
-  RX.shadowBlur=0;
-  RX.textAlign='center';
 }
 
 function stopRecording() {

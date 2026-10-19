@@ -98,7 +98,6 @@ button:focus-visible, input:focus-visible, label:focus-visible {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  filter: drop-shadow(0 0 7px rgba(var(--p-rgb), 0.75));
 }
 
 .disc-ring {
@@ -108,10 +107,19 @@ button:focus-visible, input:focus-visible, label:focus-visible {
   background: radial-gradient(circle at 40% 35%, var(--purple-dark) 0%, var(--mid) 60%, var(--bg) 100%);
   border: 2px solid var(--purple);
   box-shadow:
-    0 0 calc(26px + var(--beat) * 44px) rgba(var(--p-rgb), calc(0.5 + var(--beat) * 0.45)),
+    0 0 26px rgba(var(--p-rgb), 0.5),
     0 0 60px rgba(var(--p-rgb), 0.25),
     inset 0 0 30px rgba(var(--p-rgb), 0.2);
   will-change: transform;
+}
+
+/* Zarbada yonadigan nur: JS faqat opacity ni oʻzgartiradi */
+.disc-glow {
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: 50%;
+  box-shadow: 0 0 40px 10px rgba(var(--p-rgb), 0.9);
+  opacity: 0; pointer-events: none;
+  will-change: opacity;
 }
 
 /* Aylanadigan vinil */
@@ -340,12 +348,10 @@ button:focus-visible, input:focus-visible, label:focus-visible {
 /* ═════════ SOZLAMALAR PANELI ═════════ */
 .panel {
   width: 100%;
-  background: rgba(var(--p-rgb), 0.07);
+  background: linear-gradient(rgba(var(--p-rgb), 0.08), rgba(var(--p-rgb), 0.08)), rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(var(--p-rgb), 0.28);
   border-radius: 20px;
   padding: 12px 12px 16px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .tabs {
