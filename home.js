@@ -1,5 +1,5 @@
 /*
- * DEXO PHONK PLAYER — home.js
+ * DEXO PLAYER — home.js
  * ==========================================================
  * YANGI IMKONIYATLAR:
  *  • Zarba (bas) aniqlash — effektlar musiqa ritmiga mos ishlaydi:
@@ -7,7 +7,7 @@
  *  • 4 xil vizualizer (Doira / Toʻlqin / Nuqta / Yulduz) + Avto rejim
  *  • 6 ta rang mavzusi (Kamalak — musiqa bilan oʻzgaradi)
  *  • Ovoz effektlari: Bas, Yuqori, Reverb, Distorsiya, Tezlik, 8D
- *    + tayyor sozlamalar (Bass Boost, Phonk Drive, Slowed+Reverb, Nightcore, 8D)
+ *    + tayyor sozlamalar (Bass Boost, Drive, Slowed+Reverb, Nightcore, 8D)
  *  • Pleylist: bir nechta musiqa, aralashtirish, takrorlash, drag & drop
  *  • Klaviatura tugmalari va telefon qulf ekranidagi boshqaruv
  *
@@ -20,7 +20,7 @@
  */
 
 // ── SOZLAMALAR (localStorage da saqlanadi) ───────────────────
-const STORE_KEY = 'dexo_phonk_player_v2';
+const STORE_KEY = 'dexo_player_v2';
 const DEFAULTS = {
   theme: 'neon',
   mode: 'circle',          // circle | wave | dots | star | auto
@@ -126,7 +126,7 @@ const vizCanvas     = $('vizCanvas');
 const bgCanvas      = $('bgCanvas');
 const loadedInfo    = $('loadedInfo');
 const appTitle      = $('appTitle');
-const phonkLabel    = $('phonkLabel');
+const vizLabel      = $('vizLabel');
 const mBass         = $('mBass');
 const mMid          = $('mMid');
 const mHigh         = $('mHigh');
@@ -694,7 +694,7 @@ function updateDom(now, dt) {
   const gl = CFG.fx.glitch && now < S.glitchUntil;
   if (gl !== S.glitchOn) {
     S.glitchOn = gl;
-    [titleEl, phonkLabel, appTitle].forEach(el => el.classList.toggle('glitch', gl));
+    [titleEl, vizLabel, appTitle].forEach(el => el.classList.toggle('glitch', gl));
   }
 
   // Oʻlchagichlar
@@ -788,13 +788,13 @@ function applyFx() {
 const PRESETS = {
   normal:    { bass: 0,  treble: 0,  reverb: 0,  drive: 0,  speed: 1,    d8: false },
   bass:      { bass: 10, treble: 2,  reverb: 0,  drive: 8,  speed: 1,    d8: false },
-  phonk:     { bass: 9,  treble: 1,  reverb: 12, drive: 35, speed: 1,    d8: false },
+  drive:     { bass: 9,  treble: 1,  reverb: 12, drive: 35, speed: 1,    d8: false },
   slowed:    { bass: 4,  treble: -3, reverb: 55, drive: 0,  speed: 0.85, d8: false },
   nightcore: { bass: 2,  treble: 3,  reverb: 0,  drive: 0,  speed: 1.25, d8: false },
   d8:        { bass: 3,  treble: 0,  reverb: 20, drive: 0,  speed: 1,    d8: true  },
 };
 const PRESET_NAMES = {
-  normal: 'Oddiy', bass: 'Bass Boost', phonk: 'Phonk Drive',
+  normal: 'Oddiy', bass: 'Bass Boost', drive: 'Drive',
   slowed: 'Slowed + Reverb', nightcore: 'Nightcore', d8: '8D',
 };
 
@@ -930,7 +930,7 @@ function parseName(name) {
   if (parts.length >= 2) {
     return { artist: parts[0].trim().toUpperCase(), title: parts.slice(1).join(' - ').trim().toUpperCase() };
   }
-  return { artist: 'DEXO PHONK', title: name.toUpperCase() };
+  return { artist: 'DEXO PLAYER', title: name.toUpperCase() };
 }
 
 function addFiles(fileList) {
@@ -1173,7 +1173,7 @@ window.addEventListener('drop', e => {
 function updateMediaSession(t) {
   if (!('mediaSession' in navigator)) return;
   try {
-    navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist, album: 'DEXO PHONK' });
+    navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist, album: 'DEXO PLAYER' });
     navigator.mediaSession.setActionHandler('play', playAudio);
     navigator.mediaSession.setActionHandler('pause', () => audio.pause());
     navigator.mediaSession.setActionHandler('previoustrack', goPrev);
@@ -1374,7 +1374,7 @@ async function startRecording() {
     const blob    = new Blob(S.chunks, { type: baseType });
     const blobUrl = URL.createObjectURL(blob);
     const ext     = mimeType.includes('mp4') ? 'mp4' : 'webm';
-    const fname   = `phonk_video_${Date.now()}.${ext}`;
+    const fname   = `dexo_video_${Date.now()}.${ext}`;
 
     // Yuklab olish
     const a = document.createElement('a');
@@ -1490,18 +1490,18 @@ function recRenderLoop(ts) {
   RX.shadowBlur = 0;
   RX.font = `${Math.round(inR * 0.2)}px Rajdhani,sans-serif`;
   RX.fillStyle = css(T.s);
-  RX.fillText('PHONK', dcx, dcy + inR * 0.4);
+  RX.fillText('PLAYER', dcx, dcy + inR * 0.4);
 
-  // 4. PHONK label (glitch paytida siljiydi)
+  // 4. DEXO PLAYER label (glitch paytida siljiydi)
   const gOff = S.glitchOn ? (Math.random() - 0.5) * 8 : 0;
   RX.font = 'bold 30px Orbitron,monospace';
   if (S.glitchOn) {
-    RX.fillStyle = css(T.a); RX.fillText('PHONK', W/2 + gOff + 3, vY + vSize + 32);
-    RX.fillStyle = css(T.s); RX.fillText('PHONK', W/2 + gOff - 3, vY + vSize + 32);
+    RX.fillStyle = css(T.a); RX.fillText('DEXO PLAYER', W/2 + gOff + 3, vY + vSize + 32);
+    RX.fillStyle = css(T.s); RX.fillText('DEXO PLAYER', W/2 + gOff - 3, vY + vSize + 32);
   }
   RX.fillStyle = css(T.l);
   RX.shadowColor = css(T.p); RX.shadowBlur = (14) * REC_SCALE;
-  RX.fillText('PHONK', W/2 + gOff, vY + vSize + 32);
+  RX.fillText('DEXO PLAYER', W/2 + gOff, vY + vSize + 32);
   RX.shadowBlur = 0;
 
   // 5. Qo'shiq nomi
