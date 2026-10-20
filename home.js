@@ -1297,7 +1297,7 @@ document.addEventListener('keydown', e => {
 
 // ── VIDEO RECORDING ───────────────────────────────────────────
 // Video oʻlchami: mantiqiy 480x854, haqiqiy 720x1280 (HD) — aniq va xira emas
-const REC_W = 480, REC_H = 854, REC_SCALE = 1.5;
+const REC_W = 480, REC_H = 854, REC_SCALE = 2.25; // 1080x1920 Full HD
 
 function rrect(RX, x, y, w, h, r) {
   RX.beginPath();
@@ -1313,10 +1313,10 @@ async function startRecording() {
   // Offscreen canvas — 9:16 mobil format
   const RC = document.createElement('canvas');
   RC.width  = Math.round(REC_W * REC_SCALE);
-  RC.height = Math.round(REC_H * REC_SCALE);
+  RC.height = 1920; // aniq 1080x1920 (H.264 level 4.0 chegarasida)
   S.recCanvas = RC;
   S.recCtx    = RC.getContext('2d');
-  S.recCtx.scale(REC_SCALE, REC_SCALE);
+  S.recCtx.scale(REC_SCALE, 1920 / REC_H);
   S.recCtx.imageSmoothingEnabled = true;
   S.recCtx.imageSmoothingQuality = 'high';
 
@@ -1355,7 +1355,7 @@ async function startRecording() {
   try {
     S.mediaRecorder = new MediaRecorder(combined, {
       mimeType,
-      videoBitsPerSecond: 8_000_000,
+      videoBitsPerSecond: 14_000_000,
       audioBitsPerSecond: 192_000,
     });
   } catch(e) {
